@@ -6,6 +6,7 @@
 <title>iKAPH Forum — Event Management Dashboard v3</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--navy:#0B1729;--navy-mid:#12213A;--navy-light:#1B2F4E;--navy-border:#243550;--gold:#C9A84C;--gold-light:#E8C97A;--gold-dim:#8A6E2E;--teal:#2AB5A0;--teal-dim:#1A7A6E;--text:#E8EDF5;--text-mid:#9AAABB;--text-dim:#5A7090;--success:#3DD68C;--warning:#F5A623;--danger:#F05252;--info:#60A5FA;--purple:#A78BFA;--sidebar-w:230px;--header-h:56px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -1954,6 +1955,10 @@ function recountVolunteers(){
 }
 
 // ─── AUTH & STORAGE ───────────────────────────────────────────
+const supabaseUrl = 'https://jycofrhvkznmphlrmtqj.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5Y29mcmh2a3pobm1waGxybXRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODAwOTcsImV4cCI6MjA5Mzk1NjA5N30.-j2zq4PxWot4ldeb5Mxa4DoYpmFWZcFOLvTBN0ejH2s';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
 function checkAuth(){
   const pass=document.getElementById('admin-pass').value;
   if(pass==='ikaph2026'){
@@ -1963,7 +1968,7 @@ function checkAuth(){
     alert('Invalid Password');
   }
 }
-function saveState(){
+async function saveState(){
   const data={
     judges: document.getElementById('judges-tbody').innerHTML,
     abstracts: document.getElementById('abs-tbody').innerHTML,
@@ -1978,13 +1983,15 @@ function saveState(){
     booths: document.getElementById('booth-tbody').innerHTML,
     teams: TEAMS
   };
-  localStorage.setItem('ikaph_dashboard_data', JSON.stringify(data));
+  const { error } = await supabase.from('dashboard_state').update({ data: data }).eq('id', 1);
+  if(error) console.error('Save failed', error);
 }
-function loadState(){
-  const saved=localStorage.getItem('ikaph_dashboard_data');
-  if(!saved) return;
+async function loadState(){
+  const { data: rows, error } = await supabase.from('dashboard_state').select('data').eq('id', 1).single();
+  if(error) { console.error('Load failed', error); return; }
+  if(!rows || !rows.data) return;
+  const data = rows.data;
   try {
-    const data=JSON.parse(saved);
     if(data.judges) document.getElementById('judges-tbody').innerHTML=data.judges;
     if(data.abstracts) document.getElementById('abs-tbody').innerHTML=data.abstracts;
     if(data.awards) document.getElementById('awards-tbody').innerHTML=data.awards;
@@ -1997,23 +2004,33 @@ function loadState(){
     if(data.tasks) document.getElementById('task-tbody').innerHTML=data.tasks;
     if(data.booths) document.getElementById('booth-tbody').innerHTML=data.booths;
     if(data.teams) Object.assign(TEAMS, data.teams);
-    toast('Dashboard state restored');
+    
+    if(typeof recountJudges === 'function') recountJudges();
+    if(typeof recountVolunteers === 'function') recountVolunteers();
+    if(typeof renderTeamsOverview === 'function') renderTeamsOverview();
+    if(typeof recountAbstracts === 'function') recountAbstracts();
+    if(typeof recountAwards === 'function') recountAwards();
+    if(typeof recountStudents === 'function') recountStudents();
+    if(typeof recountMockStats === 'function') recountMockStats();
+    if(typeof renderMockSchedule === 'function') renderMockSchedule();
+    
+    toast('Dashboard state restored from Cloud');
   } catch(e){ console.error('Load failed', e); }
 }
-// Auto-save on any click or keyup
-document.addEventListener('click', (e)=>{ if(e.target.closest('button') || e.target.closest('select')) saveState(); });
-document.addEventListener('keyup', (e)=>{ if(e.target.closest('td[contenteditable]')) saveState(); });
+// Auto-save on any click, change or keyup
+let saveTimeout;
+function debouncedSaveState() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveState();
+  }, 1000);
+}
+document.addEventListener('click', (e)=>{ if(e.target.closest('button')) debouncedSaveState(); });
+document.addEventListener('change', (e)=>{ if(e.target.closest('select') || e.target.tagName==='INPUT') debouncedSaveState(); });
+document.addEventListener('keyup', (e)=>{ if(e.target.closest('td[contenteditable]') || e.target.tagName==='INPUT') debouncedSaveState(); });
 
 // ─── INIT ─────────────────────────────────────────────────────
 loadState();
-recountJudges();
-recountVolunteers();
-renderTeamsOverview();
-recountAbstracts();
-recountAwards();
-recountStudents();
-recountMockStats();
-renderMockSchedule();
 </script>
 </body>
 </html>
