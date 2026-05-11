@@ -6,6 +6,7 @@
 <title>iKAPH Forum — Event Management Dashboard v3</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--navy:#0B1729;--navy-mid:#12213A;--navy-light:#1B2F4E;--navy-border:#243550;--gold:#C9A84C;--gold-light:#E8C97A;--gold-dim:#8A6E2E;--teal:#2AB5A0;--teal-dim:#1A7A6E;--text:#E8EDF5;--text-mid:#9AAABB;--text-dim:#5A7090;--success:#3DD68C;--warning:#F5A623;--danger:#F05252;--info:#60A5FA;--purple:#A78BFA;--sidebar-w:230px;--header-h:56px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -145,7 +146,16 @@ select option{background:var(--navy-mid);}
 </head>
 <div id="toast"></div>
 
-<!-- AUTH OVERLAY REMOVED -->
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="logo-mark" style="margin:0 auto 15px;width:50px;height:50px;font-size:20px">iK</div>
+    <h2 style="font-size:18px;margin-bottom:10px">Admin Access</h2>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:20px">Please enter the dashboard password</p>
+    <input type="password" id="admin-pass" placeholder="••••••••" style="text-align:center;font-size:18px;margin-bottom:15px;letter-spacing:4px">
+    <button class="btn btn-primary" style="width:100%" onclick="checkAuth()">Login to Dashboard</button>
+  </div>
+</div>
 
 <!-- SIDEBAR -->
 <nav id="sidebar">
@@ -209,6 +219,7 @@ select option{background:var(--navy-mid);}
   </div>
   <div class="header-right">
     <span id="hdr-links" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+    <span id="sync-status" class="badge badge-info" style="display:none">☁️ Syncing...</span>
     <span class="badge badge-gold">May 17–18</span>
     <span class="badge badge-success"><span class="live-pulse" style="margin-right:5px"></span>Live</span>
     <button class="btn btn-ghost btn-sm" onclick="toggleFullscreen()">⛶</button>
@@ -1944,8 +1955,40 @@ function recountVolunteers(){
   setEl('vol-cert',eligible);
 }
 
-// ─── STORAGE ───────────────────────────────────────────
-function saveState(){
+// ─── AUTH & STORAGE (SUPABASE) ────────────────────────────────
+const SUPABASE_URL = 'https://jycofrhvkzhnmphlrmtj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5Y29mcmh2a3pobm1waGxybXRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODAwOTcsImV4cCI6MjA5Mzk1NjA5N30.-j2zq4PxWot4ldeb5Mxa4DoYpmFWZcFOLvTBN0ejH2s';
+let supabase = null;
+
+function checkAuth(){
+  const pass=document.getElementById('admin-pass').value;
+  if(pass==='ikaph2026'){
+    document.getElementById('auth-overlay').style.display='none';
+    toast('Welcome back, Admin');
+    initSupabase();
+  } else {
+    alert('Invalid Password');
+  }
+}
+
+function initSupabase() {
+  if(SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE') {
+    alert("⚠️ SUPABASE NOT CONFIGURED: You must edit the index.html file to paste your Supabase URL and Anon Key into lines near the bottom of the code. For now, data will NOT save to the cloud!");
+    return;
+  }
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  loadState();
+}
+
+async function saveState(){
+  if(!supabase) return;
+  // Ensure dropdown selections are captured in HTML
+  document.querySelectorAll('select').forEach(sel => {
+    const opts = sel.querySelectorAll('option');
+    opts.forEach(opt => opt.removeAttribute('selected'));
+    if(sel.selectedIndex >= 0) opts[sel.selectedIndex].setAttribute('selected', 'selected');
+  });
+
   const data={
     judges: document.getElementById('judges-tbody').innerHTML,
     abstracts: document.getElementById('abs-tbody').innerHTML,
@@ -1960,51 +2003,75 @@ function saveState(){
     booths: document.getElementById('booth-tbody').innerHTML,
     teams: TEAMS
   };
-  localStorage.setItem('ikaph_dash_state',JSON.stringify(data));
-}
-function loadState(){
-  const s=localStorage.getItem('ikaph_dash_state');
-  if(!s)return;
-  try{
-    const data=JSON.parse(s);
-    if(data.judges) document.getElementById('judges-tbody').innerHTML=data.judges;
-    if(data.abstracts) document.getElementById('abs-tbody').innerHTML=data.abstracts;
-    if(data.awards) document.getElementById('awards-tbody').innerHTML=data.awards;
-    if(data.day1) document.getElementById('day1-tbody').innerHTML=data.day1;
-    if(data.day2) document.getElementById('day2-tbody').innerHTML=data.day2;
-    if(data.oral) document.getElementById('oral-tbody').innerHTML=data.oral;
-    if(data.students) document.getElementById('students-tbody').innerHTML=data.students;
-    if(data.companies) document.getElementById('companies-tbody').innerHTML=data.companies;
-    if(data.schedule) document.getElementById('mock-schedule-tbody').innerHTML=data.schedule;
-    if(data.tasks) document.getElementById('task-tbody').innerHTML=data.tasks;
-    if(data.booths) document.getElementById('booth-tbody').innerHTML=data.booths;
-    if(data.teams) Object.assign(TEAMS,data.teams);
-    
-    if(typeof recountJudges === 'function') recountJudges();
-    if(typeof recountVolunteers === 'function') recountVolunteers();
-    if(typeof renderTeamsOverview === 'function') renderTeamsOverview();
-    if(typeof recountAbstracts === 'function') recountAbstracts();
-    if(typeof recountAwards === 'function') recountAwards();
-    if(typeof recountStudents === 'function') recountStudents();
-    if(typeof recountMockStats === 'function') recountMockStats();
-    if(typeof renderMockSchedule === 'function') renderMockSchedule();
-  }catch(e){console.error('Load failed',e);}
+  
+  const syncBadge = document.getElementById('sync-status');
+  if(syncBadge) syncBadge.style.display = 'inline-flex';
+  
+  try {
+    const { error } = await supabase.from('app_state').upsert({ id: 1, state: data });
+    if(error) console.error('Save error:', error);
+  } catch(e) {
+    console.error('Save failed', e);
+  }
+  
+  if(syncBadge) syncBadge.style.display = 'none';
 }
 
-// Auto-save on any click, change or keyup
-let saveTimeout;
-function debouncedSaveState() {
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => {
-    saveState();
-  }, 1000);
+async function loadState(){
+  if(!supabase) return;
+  try {
+    const { data, error } = await supabase.from('app_state').select('state').eq('id', 1).single();
+    if(error && error.code !== 'PGRST116') { // Ignore row not found
+        console.error('Fetch error:', error);
+        return;
+    }
+    if(!data || !data.state) return;
+    
+    const s = data.state;
+    if(s.judges) document.getElementById('judges-tbody').innerHTML=s.judges;
+    if(s.abstracts) document.getElementById('abs-tbody').innerHTML=s.abstracts;
+    if(s.awards) document.getElementById('awards-tbody').innerHTML=s.awards;
+    if(s.day1) document.getElementById('day1-tbody').innerHTML=s.day1;
+    if(s.day2) document.getElementById('day2-tbody').innerHTML=s.day2;
+    if(s.oral) document.getElementById('oral-tbody').innerHTML=s.oral;
+    if(s.students) document.getElementById('students-tbody').innerHTML=s.students;
+    if(s.companies) document.getElementById('companies-tbody').innerHTML=s.companies;
+    if(s.schedule) document.getElementById('mock-schedule-tbody').innerHTML=s.schedule;
+    if(s.tasks) document.getElementById('task-tbody').innerHTML=s.tasks;
+    if(s.booths) document.getElementById('booth-tbody').innerHTML=s.booths;
+    if(s.teams) Object.assign(TEAMS, s.teams);
+    
+    // Recalculate totals after load
+    recountJudges();
+    recountVolunteers();
+    renderTeamsOverview();
+    recountAbstracts();
+    recountAwards();
+    recountStudents();
+    recountMockStats();
+    renderMockSchedule();
+    
+    toast('☁️ Cloud data synced!');
+  } catch(e){ 
+    console.error('Load failed', e); 
+  }
 }
-document.addEventListener('click', (e)=>{ if(e.target.closest('button')) debouncedSaveState(); });
-document.addEventListener('change', (e)=>{ if(e.target.closest('select') || e.target.tagName==='INPUT') debouncedSaveState(); });
-document.addEventListener('keyup', (e)=>{ if(e.target.closest('td[contenteditable]') || e.target.tagName==='INPUT') debouncedSaveState(); });
+
+// Auto-save on any change, input, or relevant button click
+document.addEventListener('change', (e)=> { saveState(); });
+document.addEventListener('input', (e)=> { if(e.target.closest('td[contenteditable]') || e.target.closest('input')) saveState(); });
+document.addEventListener('click', (e)=> { if(e.target.closest('button')) setTimeout(saveState, 50); });
 
 // ─── INIT ─────────────────────────────────────────────────────
-loadState();
+// Base recounts run immediately on initial static HTML load
+recountJudges();
+recountVolunteers();
+renderTeamsOverview();
+recountAbstracts();
+recountAwards();
+recountStudents();
+recountMockStats();
+renderMockSchedule();
 </script>
 </body>
 </html>
