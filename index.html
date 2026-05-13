@@ -152,7 +152,7 @@ select option{background:var(--navy-mid);}
     <div class="logo-mark" style="margin:0 auto 15px;width:50px;height:50px;font-size:20px">iK</div>
     <h2 style="font-size:18px;margin-bottom:10px">Admin Access</h2>
     <p style="font-size:12px;color:var(--text-dim);margin-bottom:20px">Please enter the dashboard password</p>
-    <input type="password" id="admin-pass" placeholder="••••••••" style="text-align:center;font-size:18px;margin-bottom:15px;letter-spacing:4px">
+    <input type="password" id="admin-pass" placeholder="••••••••" style="text-align:center;font-size:18px;margin-bottom:15px;letter-spacing:4px" onkeypress="if(event.key==='Enter') checkAuth()">
     <button class="btn btn-primary" style="width:100%" onclick="checkAuth()">Login to Dashboard</button>
   </div>
 </div>
@@ -1961,7 +1961,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 let supabase = null;
 
 function checkAuth(){
-  const pass=document.getElementById('admin-pass').value;
+  const pass=document.getElementById('admin-pass').value.trim().toLowerCase();
   if(pass==='ikaph2026'){
     document.getElementById('auth-overlay').style.display='none';
     toast('Welcome back, Admin');
@@ -1972,12 +1972,20 @@ function checkAuth(){
 }
 
 function initSupabase() {
-  if(SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE') {
-    alert("⚠️ SUPABASE NOT CONFIGURED: You must edit the index.html file to paste your Supabase URL and Anon Key into lines near the bottom of the code. For now, data will NOT save to the cloud!");
-    return;
+  try {
+    if(SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE') {
+      alert("⚠️ SUPABASE NOT CONFIGURED: You must edit the index.html file to paste your Supabase URL and Anon Key into lines near the bottom of the code. For now, data will NOT save to the cloud!");
+      return;
+    }
+    if(!window.supabase) {
+      console.warn("Supabase library not loaded. Perhaps blocked by adblock?");
+      return;
+    }
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    loadState();
+  } catch(e) {
+    console.error("Supabase Init Error: ", e);
   }
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  loadState();
 }
 
 async function saveState(){
