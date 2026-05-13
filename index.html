@@ -146,16 +146,7 @@ select option{background:var(--navy-mid);}
 </head>
 <div id="toast"></div>
 
-<!-- AUTH OVERLAY -->
-<div id="auth-overlay">
-  <div class="auth-card">
-    <div class="logo-mark" style="margin:0 auto 15px;width:50px;height:50px;font-size:20px">iK</div>
-    <h2 style="font-size:18px;margin-bottom:10px">Admin Access</h2>
-    <p style="font-size:12px;color:var(--text-dim);margin-bottom:20px">Please enter the dashboard password</p>
-    <input type="password" id="admin-pass" placeholder="••••••••" style="text-align:center;font-size:18px;margin-bottom:15px;letter-spacing:4px" onkeypress="if(event.key==='Enter') checkAuth()">
-    <button class="btn btn-primary" style="width:100%" onclick="checkAuth()">Login to Dashboard</button>
-  </div>
-</div>
+<!-- AUTH REMOVED -->
 
 <!-- SIDEBAR -->
 <nav id="sidebar">
@@ -2080,6 +2071,7 @@ recountAwards();
 recountStudents();
 recountMockStats();
 renderMockSchedule();
+initSupabase();
 </script>
 </body>
 </html>
