@@ -1951,16 +1951,7 @@ const SUPABASE_URL = 'https://jycofrhvkzhnmphlrmtj.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5Y29mcmh2a3pobm1waGxybXRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODAwOTcsImV4cCI6MjA5Mzk1NjA5N30.-j2zq4PxWot4ldeb5Mxa4DoYpmFWZcFOLvTBN0ejH2s';
 let supabase = null;
 
-function checkAuth(){
-  const pass=document.getElementById('admin-pass').value.trim().toLowerCase();
-  if(pass==='ikaph2026'){
-    document.getElementById('auth-overlay').style.display='none';
-    toast('Welcome back, Admin');
-    initSupabase();
-  } else {
-    alert('Invalid Password');
-  }
-}
+// Auth removed - dashboard is open access
 
 function initSupabase() {
   try {
