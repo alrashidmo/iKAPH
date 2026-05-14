@@ -2053,17 +2053,96 @@ document.addEventListener('change', (e)=> { saveState(); });
 document.addEventListener('input', (e)=> { if(e.target.closest('td[contenteditable]') || e.target.closest('input')) saveState(); });
 document.addEventListener('click', (e)=> { if(e.target.closest('button')) setTimeout(saveState, 50); });
 
+// ─── EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE ─────────────────────
+// MUST run before init — init errors must not prevent these assignments!
+window.showTab=showTab;
+window.openTeam=openTeam;
+window.showModal=showModal;
+window.closeModal=closeModal;
+window.toggleFullscreen=toggleFullscreen;
+window.filterByStatus=filterByStatus;
+window.filterTable=filterTable;
+window.deleteRow=deleteRow;
+window.exportTable=exportTable;
+window.exportToExcel=exportTable;
+window.recountJudges=recountJudges;
+window.recountAbstracts=recountAbstracts;
+window.recountAwards=recountAwards;
+window.recountStudents=recountStudents;
+window.recountMockStats=recountMockStats;
+window.recountVolunteers=recountVolunteers;
+window.recountJudgeLimits=recountJudgeLimits;
+window.renderCurrentTeamChecklist=renderCurrentTeamChecklist;
+window.updateInstPieChart=updateInstPieChart;
+window.renderTeamsOverview=renderTeamsOverview;
+window.submitNewJudge=submitNewJudge;
+window.submitNewTask=submitNewTask;
+window.addAbstractRow=addAbstractRow;
+window.addAwardRow=addAwardRow;
+window.addChecklistItem=addChecklistItem;
+window.addCompanyRow=addCompanyRow;
+window.addProgramRow=addProgramRow;
+window.addStudentRow=addStudentRow;
+window.addTeamMember=addTeamMember;
+window.advanceSession=advanceSession;
+window.generateCert=generateCert;
+window.genAwardCert=genAwardCert;
+window.batchGenerateCerts=batchGenerateCerts;
+window.applyDesignToAll=applyDesignToAll;
+window.previewCertWithDesign=previewCertWithDesign;
+window.loadCertDesign=loadCertDesign;
+window.handleCertDrop=handleCertDrop;
+window.startOralTimer=startOralTimer;
+window.pauseOralTimer=pauseOralTimer;
+window.resetOralTimer=resetOralTimer;
+window.startRapidTimer=startRapidTimer;
+window.pauseRapidTimer=pauseRapidTimer;
+window.resetRapidTimer=resetRapidTimer;
+window.startMainTimer=startMainTimer;
+window.pauseMainTimer=pauseMainTimer;
+window.resetMainTimer=resetMainTimer;
+window.setCurrentSpeaker=setCurrentSpeaker;
+window.setRapidSpeaker=setRapidSpeaker;
+window.sendChatMsg=sendChatMsg;
+window.sendAlert=sendAlert;
+window.miTab=miTab;
+window.syncCheckIn=syncCheckIn;
+window.checkIn=checkIn;
+window.showWinnersPanel=showWinnersPanel;
+window.exportWinnersPanel=exportWinnersPanel;
+window.importAbstractsFromExcel=importAbstractsFromExcel;
+window.exportAbstractsToExcel=exportAbstractsToExcel;
+window.importStudentsFromExcel=importStudentsFromExcel;
+window.filterAbsByProgram=filterAbsByProgram;
+window.filterAbsByYear=filterAbsByYear;
+window.filterAbsByStatus=filterAbsByStatus;
+window.toggleChecklistItem=toggleChecklistItem;
+window.removeChecklistItem=removeChecklistItem;
+window.copyText=copyText;
+window.updateGithubUrl=updateGithubUrl;
+window.copyGithubUrl=copyGithubUrl;
+window.dragStudent=dragStudent;
+window.dropStudent=dropStudent;
+window.renderTeamMembers=renderTeamMembers;
+window.renderChecklist=renderChecklist;
+window.TEAMS=TEAMS;
+window.currentTeamKey=currentTeamKey;
+
 // ─── INIT ─────────────────────────────────────────────────────
-// Base recounts run immediately on initial static HTML load
-recountJudges();
-recountVolunteers();
-renderTeamsOverview();
-recountAbstracts();
-recountAwards();
-recountStudents();
-recountMockStats();
-renderMockSchedule();
-initSupabase();
+// Wrapped in try/catch so errors here never break navigation
+try {
+  recountJudges();
+  recountVolunteers();
+  renderTeamsOverview();
+  recountAbstracts();
+  recountAwards();
+  recountStudents();
+  recountMockStats();
+  renderMockSchedule();
+  initSupabase();
+} catch(e) {
+  console.error('Init error (non-fatal):', e);
+}
 </script>
 </body>
 </html>
